@@ -1,0 +1,29 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<fcntl.h>
+#include<sys/types.h>
+#include<sys/stat.h>
+#include<unistd.h>
+#define FIFO1 "fifo1"
+#define FIFO2 "fifo2"
+int main(){
+    char p[100],c[5000],ch; int num,fd,fd2,f1;
+    mknod(FIFO1,S_IFIFO|0666,0); mknod(FIFO2,S_IFIFO|0666,0);
+    printf("Server online...\n");
+    fd=open(FIFO1,O_RDONLY); fd2=open(FIFO2,O_WRONLY);
+    printf("Waiting for client...\n");
+    if((num=read(fd,p,100))==-1) perror("Read Error");
+    else{
+        p[num]='\0'; printf("File: %s\n",p);
+        if((f1=open(p,O_RDONLY))<0){
+            write(fd2,"File not found",15); return 1;
+        }else{
+            FILE*file=fdopen(f1,"r"); num=0;
+            while((ch=fgetc(file))!=EOF) c[num++]=ch; c[num]=0;
+            if((num=write(fd2,c,strlen(c)))==-1) printf("Write Error\n");
+            else printf("Transfer completed\n");
+        }
+    }
+    return 0;
+}
